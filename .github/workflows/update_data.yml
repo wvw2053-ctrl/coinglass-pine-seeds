@@ -2,7 +2,7 @@ name: Update BTC Liquidation & Market Data
 
 on:
   schedule:
-    # Every 15 minutes â uses ~2880 runs/month Ã ~15s = ~720 min (well within free tier)
+    # Every 15 minutes
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      # No pip install needed â script uses only Python stdlib (urllib)
+      # No pip install needed - script uses only Python stdlib (urllib)
 
       - name: Fetch market data and calculate liquidation levels
         run: python fetch_liquidations.py all
