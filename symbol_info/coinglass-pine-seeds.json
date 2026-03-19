@@ -1,0 +1,12 @@
+{
+  "BTC_LIQ_LONGS": {
+    "symbol": "BTC_LIQ_LONGS",
+    "currency": "USD",
+    "description": "BTC Long Liquidation Levels (Coinglass)"
+  },
+  "BTC_LIQ_SHORTS": {
+    "symbol": "BTC_LIQ_SHORTS",
+    "currency": "USD",
+    "description": "BTC Short Liquidation Levels (Coinglass)"
+  }
+}
