@@ -2,12 +2,12 @@
   "BTC_LIQ_LONGS": {
     "symbol": "BTC_LIQ_LONGS",
     "currency": "USD",
-    "description": "BTC Long Liquidation Levels (Binance+Hyperliquid)"
+    "description": "BTC Long Liquidation Levels (Coinglass Real Data)"
   },
   "BTC_LIQ_SHORTS": {
     "symbol": "BTC_LIQ_SHORTS",
     "currency": "USD",
-    "description": "BTC Short Liquidation Levels (Binance+Hyperliquid)"
+    "description": "BTC Short Liquidation Levels (Coinglass Real Data)"
   },
   "BTC_FEAR_GREED": {
     "symbol": "BTC_FEAR_GREED",
