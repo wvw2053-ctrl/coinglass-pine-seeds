@@ -1,5 +1,5 @@
 """
-Real Coinglass Liquidation Heatmap → TradingView Pine Seeds
+Real Coinglass Liquidation Heatmap â TradingView Pine Seeds
 ============================================================
 Fetches REAL liquidation heatmap data from Coinglass (Model 3)
 and converts it to Pine Seeds CSV format for TradingView.
@@ -8,8 +8,8 @@ Also fetches market metrics from Binance/Hyperliquid (free, no API key)
 and Fear & Greed Index.
 
 Data pipeline:
-  Coinglass internal API → AES decrypt → gzip decompress → JSON
-  → aggregate into price bands → Pine Seeds CSV
+  Coinglass internal API â AES decrypt â gzip decompress â JSON
+  â aggregate into price bands â Pine Seeds CSV
 
 Requirements: pip install pycryptodome
 """
@@ -18,10 +18,12 @@ import json
 import sys
 import time
 import gzip
-import random
+import hmac
+import hashlib
+import struct
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from base64 import b64decode, b64encode
+from base64 import b64decode, b64encode, b32decode
 
 # Python 3 stdlib for HTTP
 from urllib.request import Request, urlopen
@@ -36,11 +38,22 @@ from Crypto.Util.Padding import pad, unpad
 # AES ENCRYPTION / DECRYPTION
 # ============================================================================
 
-AES_KEY = b"7208892162400154"  # 16-byte key
+AES_KEY = b"1f68efd73f8d4921acc0dead41dd39bc"  # 32-byte key = AES-256 (updated 2026-03-20)
+TOTP_SECRET = "I65VU7K5ZQL7WB4E"  # Base32-encoded TOTP secret
+
+
+def totp_generate(secret_b32: str, timestamp: int, step: int = 30, digits: int = 6) -> str:
+    """Generate TOTP code (RFC 6238) using stdlib only."""
+    key = b32decode(secret_b32, casefold=True)
+    counter = struct.pack(">Q", timestamp // step)
+    hmac_hash = hmac.new(key, counter, hashlib.sha1).digest()
+    offset = hmac_hash[-1] & 0x0F
+    code = struct.unpack(">I", hmac_hash[offset:offset + 4])[0] & 0x7FFFFFFF
+    return str(code % (10 ** digits)).zfill(digits)
 
 
 def aes_ecb_encrypt(plaintext: str) -> str:
-    """AES-128-ECB encrypt with PKCS7 padding, return base64."""
+    """AES-256-ECB encrypt with PKCS7 padding, return base64."""
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     padded = pad(plaintext.encode("utf-8"), AES.block_size)
     encrypted = cipher.encrypt(padded)
@@ -48,7 +61,7 @@ def aes_ecb_encrypt(plaintext: str) -> str:
 
 
 def aes_ecb_decrypt(ciphertext_b64: str) -> bytes:
-    """AES-128-ECB decrypt, return raw bytes (PKCS7 unpadded)."""
+    """AES-256-ECB decrypt, return raw bytes (PKCS7 unpadded)."""
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     raw = b64decode(ciphertext_b64)
     decrypted = cipher.decrypt(raw)
@@ -62,8 +75,8 @@ def aes_ecb_decrypt(ciphertext_b64: str) -> bytes:
 def generate_data_param() -> str:
     """Generate the encrypted 'data' query parameter for Coinglass API."""
     ts = int(time.time())
-    rand_num = random.randint(100000, 999999)
-    plaintext = f"{ts},{rand_num}"
+    otp = totp_generate(TOTP_SECRET, ts, step=30)
+    plaintext = f"{ts},{otp}"
     return aes_ecb_encrypt(plaintext)
 
 
@@ -444,6 +457,7 @@ def write_levels_json(processed):
     print(f"  latest_levels.json written ({len(processed['long_levels'])} long, "
           f"{len(processed['short_levels'])} short clusters)")
 
+
 def write_pine_levels(processed):
     """
     Generate a Pine Script snippet with real Coinglass liquidation levels
@@ -461,15 +475,15 @@ def write_pine_levels(processed):
     short_prices = ", ".join(f"{p:.2f}" for p, _ in shorts)
     short_vols = ", ".join(f"{v:.0f}" for _, v in shorts)
 
-    pine = f"""// ═══════════════════════════════════════════════════════════
-// COINGLASS REAL LIQUIDATION LEVELS — Auto-generated
+    pine = f"""// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// COINGLASS REAL LIQUIDATION LEVELS â Auto-generated
 // Updated: {ts}
 // Source: Coinglass Model 3 Heatmap (Binance BTC/USDT)
 // Price at update: ${processed['current_price']:,.2f}
-// ═══════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 // --- Long Liquidation Clusters (below price) ---
-// Sorted by volume descending — strongest clusters first
+// Sorted by volume descending â strongest clusters first
 var float[] cg_long_prices = array.from({long_prices})
 var float[] cg_long_vols   = array.from({long_vols})
 
@@ -496,7 +510,7 @@ def main():
     heatmap_range = sys.argv[2] if len(sys.argv) > 2 else "48h"
 
     print(f"{'='*60}")
-    print(f"  Pine Seeds Data Update — {mode}")
+    print(f"  Pine Seeds Data Update â {mode}")
     print(f"  Heatmap range: {heatmap_range}")
     print(f"  Time: {datetime.now(timezone.utc).isoformat()}")
     print(f"{'='*60}")
