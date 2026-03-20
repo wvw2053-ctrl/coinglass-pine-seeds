@@ -36,7 +36,7 @@ from Crypto.Util.Padding import pad, unpad
 # AES ENCRYPTION / DECRYPTION
 # ============================================================================
 
-AES_KEY = b"28d765fec24e4b95"  # 16-byte key
+AES_KEY = b"7208892162400154"  # 16-byte key
 
 
 def aes_ecb_encrypt(plaintext: str) -> str:
