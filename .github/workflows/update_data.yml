@@ -2,7 +2,7 @@ name: Update BTC Liquidation & Market Data
 
 on:
   schedule:
-    # Every 15 minutes
+    # Every 15 minutes — uses ~2880 runs/month × ~20s = ~960 min (well within free tier)
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
@@ -21,10 +21,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      # No pip install needed - script uses only Python stdlib (urllib)
+      - name: Install dependencies
+        run: pip install pycryptodome
 
-      - name: Fetch market data and calculate liquidation levels
-        run: python fetch_liquidations.py all
+      - name: Fetch real Coinglass heatmap data and market metrics
+        run: python fetch_liquidations.py all 48h
 
       - name: Commit and push changes
         run: |
